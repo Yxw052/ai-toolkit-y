@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "cron/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ],
+  "compilerOptions": {
+    "incremental": false
+  }
+}

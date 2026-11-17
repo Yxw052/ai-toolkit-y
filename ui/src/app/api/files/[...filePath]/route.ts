@@ -1,0 +1,135 @@
+/* eslint-disable */
+import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
+import { Readable } from 'stream';
+import { getDatasetsRoot, getTrainingFolder } from '@/server/settings';
+import { catchAllToFilePath } from '@/server/catchAllPath';
+
+export async function GET(request: NextRequest, { params }: { params: { filePath: string | string[] } }) {
+  const { filePath } = await params;
+  try {
+    // Segments are already URL-decoded by Next.js; accepts both the legacy
+    // single-segment form and the `<folder>/<filename>` form.
+    const decodedFilePath = catchAllToFilePath(filePath);
+
+    // Get allowed directories
+    const datasetRoot = await getDatasetsRoot();
+    const trainingRoot = await getTrainingFolder();
+    const allowedDirs = [datasetRoot, trainingRoot];
+
+    // Security check: resolve so `..` segments collapse, then verify still under
+    // an allowed root. Substring `.includes('..')` false-positives on filenames
+    // containing `..` as text (e.g. an ellipsis in a filename).
+    const resolvedFilePath = path.resolve(decodedFilePath);
+    const isAllowed = allowedDirs.some(
+      allowedDir => resolvedFilePath === allowedDir || resolvedFilePath.startsWith(allowedDir + path.sep),
+    );
+
+    if (!isAllowed) {
+      console.warn(`Access denied: ${resolvedFilePath} not in ${allowedDirs.join(', ')}`);
+      return new NextResponse('Access denied', { status: 403 });
+    }
+
+    // Check it exists and grab file info in one stat
+    let stat;
+    try {
+      stat = await fs.promises.stat(resolvedFilePath);
+    } catch {
+      console.warn(`File not found: ${resolvedFilePath}`);
+      return new NextResponse('File not found', { status: 404 });
+    }
+    if (!stat.isFile()) {
+      return new NextResponse('Not a file', { status: 400 });
+    }
+
+    // Get filename for Content-Disposition
+    const filename = path.basename(resolvedFilePath);
+
+    // Determine content type
+    const ext = path.extname(resolvedFilePath).toLowerCase();
+    const contentTypeMap: { [key: string]: string } = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml',
+      '.bmp': 'image/bmp',
+      '.safetensors': 'application/octet-stream',
+      '.zip': 'application/zip',
+      // Videos
+      '.mp4': 'video/mp4',
+      '.avi': 'video/x-msvideo',
+      '.mov': 'video/quicktime',
+      '.mkv': 'video/x-matroska',
+      '.wmv': 'video/x-ms-wmv',
+      '.m4v': 'video/x-m4v',
+      '.flv': 'video/x-flv',
+      // Audio
+      '.mp3': 'audio/mpeg',
+      '.wav': 'audio/wav',
+      '.flac': 'audio/flac',
+      '.ogg': 'audio/ogg',
+    };
+
+    const contentType = contentTypeMap[ext] || 'application/octet-stream';
+
+    // Get range header for partial content support
+    const range = request.headers.get('range');
+
+    // Common headers for better download handling
+    const commonHeaders = {
+      'Content-Type': contentType,
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'public, max-age=86400',
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+      'X-Content-Type-Options': 'nosniff',
+    };
+
+    if (range) {
+      // Parse range header. An open-ended range (`bytes=0-`) must serve to EOF —
+      // capping it forces clients into serial re-requests and RTT-bound throughput.
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
+
+      if (isNaN(start) || isNaN(end) || start > end || start >= stat.size) {
+        return new NextResponse('Range Not Satisfiable', {
+          status: 416,
+          headers: { 'Content-Range': `bytes */${stat.size}` },
+        });
+      }
+      const chunkSize = end - start + 1;
+
+      const fileStream = fs.createReadStream(resolvedFilePath, {
+        start,
+        end,
+        highWaterMark: 4 * 1024 * 1024, // large buffer to minimize per-chunk overhead
+      });
+
+      return new NextResponse(Readable.toWeb(fileStream) as any, {
+        status: 206,
+        headers: {
+          ...commonHeaders,
+          'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+          'Content-Length': String(chunkSize),
+        },
+      });
+    } else {
+      const fileStream = fs.createReadStream(resolvedFilePath, {
+        highWaterMark: 4 * 1024 * 1024, // large buffer to minimize per-chunk overhead
+      });
+
+      return new NextResponse(Readable.toWeb(fileStream) as any, {
+        headers: {
+          ...commonHeaders,
+          'Content-Length': String(stat.size),
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Error serving file:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}
