@@ -1,120 +1,122 @@
 # AI Toolkit Y
 
-**这是我基于 [Ostris AI Toolkit](https://github.com/ostris/ai-toolkit) 为自己使用而修改的 LoRA 训练器。**
+**English** | [简体中文](README.zh-CN.md)
 
-这个仓库用来分享我的自用版本和修改记录，不是 Ostris 官方发布，也不是一个从零开发的新训练框架。原项目的训练框架、模型支持和大量界面功能来自 Ostris 及原项目贡献者，感谢他们的工作。
+**This is a LoRA trainer I modified from [Ostris AI Toolkit](https://github.com/ostris/ai-toolkit) for my own use.**
 
-- 原项目：[ostris/ai-toolkit](https://github.com/ostris/ai-toolkit)
-- 本项目：[Yxw052/ai-toolkit-y](https://github.com/Yxw052/ai-toolkit-y)
-- 原项目说明保留在 [README_UPSTREAM.md](README_UPSTREAM.md)。其中安装地址、端口和功能说明属于原项目；安装这个修改版请使用本页步骤。
-- 源码沿用原项目的 [MIT License](LICENSE)，保留原版权声明。模型权重与数据集各自的使用条件不因训练器许可证而改变。
+I am sharing my personal version and its changes. This is not an official Ostris release or a new training framework built from scratch. The training framework, model support and much of the interface come from Ostris and the upstream contributors. Thank you for their work.
 
-> 主要按我自己的 Windows + WSL2 Ubuntu + NVIDIA 显卡环境调整，不承诺覆盖所有模型、系统和训练配置，也不承诺持续跟进上游。遇到本修改版的问题，请在本仓库反馈，不要默认当作原项目的问题。
+- Upstream project: [ostris/ai-toolkit](https://github.com/ostris/ai-toolkit)
+- This project: [Yxw052/ai-toolkit-y](https://github.com/Yxw052/ai-toolkit-y)
+- The original documentation is preserved in [README_UPSTREAM.md](README_UPSTREAM.md). Its installation URLs, ports and feature descriptions refer to upstream; use the guides below for this version.
+- The original [MIT License](LICENSE) and copyright notice are retained. Model weights and datasets remain subject to their own terms.
 
-## 我改了什么
+> This version is tailored to my Windows + WSL2 Ubuntu + NVIDIA setup. I cannot promise support for every model, platform or configuration, or ongoing synchronization with upstream. Please report issues with this version in this repository rather than assuming they are upstream bugs.
 
-### 1. 有序多参考图
+## What I changed
 
-- 为 MiniMax-H3-Image 与 FLUX.3 Image Klein 接入、整理超过 3 张参考图的训练配置、采样输入及界面流程。
-- 数据集使用有序的 `control_path` 目录列表，采样使用有序的 `ctrl_imgs` 图片列表；保留显式顺序和重复图片，兼容旧的三个参考字段。
-- 增加缺图、损坏图片、配对歧义及目标误作参考的检查。参考图顺序变化时应同步检查标注和提示词。
-- 增加数据集配对预览；采样保存实际参考路径、指纹等记录，方便核对真正使用了哪些参考图。指纹记录不是参考图备份。
-- 多参考列表界面最多提供 16 个槽位；这不等于每个模型都能接受 16 张，也不等于这些数量全部完成了真实训练验证。
+### 1. Ordered reference images
 
-### 2. 采样、数据集与图片预览界面
+- Connected and organized training configuration, sampling inputs and UI workflows for more than three reference images with MiniMax-H3-Image and FLUX.3 Image Klein.
+- Datasets use an ordered `control_path` directory list; samples use an ordered `ctrl_imgs` image list. Explicit order and duplicates are preserved, with compatibility for the three legacy reference fields.
+- Added checks for missing or damaged images, ambiguous pairs and targets mistakenly used as references. Review captions and prompts whenever reference order changes.
+- Added dataset pair previews and sampling records containing the actual reference paths and fingerprints. Fingerprints are not backups of the reference images.
+- The list UI offers up to 16 slots. This does not mean every model accepts 16 references, or that every reference count has passed real training validation.
 
-- 采样参考图区默认显示 5 个槽位的宽度；空槽位不会被保存成真实参考图。
-- 超出可见区域后可以横向滚动，不显示滚动条，也不会继续挤压提示词、宽高、种子和 LoRA 强度输入框。
-- 添加参考图后自动滚动到添加位置，支持拖拽调整参考顺序。
-- 增加总采样预览，可集中修改提示词、尺寸、种子、LoRA 强度和参考图，并调整采样组顺序。
-- 数据集配对预览与采样预览中的图片可点击放大、保持比例缩放、拖动平移，左右方向键切换图片。
-- 替换按钮只打开选图窗口；点击图片才打开图片预览。替换、移除按钮移出缩略图遮挡区域。
+### 2. Sampling, datasets and image previews
 
-### 3. 中文 / English 与参数说明
+- The sample reference strip reserves space for five slots. Empty placeholders are not saved as actual references.
+- Additional images scroll horizontally with hidden scrollbars, without squeezing prompt, size, seed or LoRA scale fields.
+- Adding an image scrolls to the add position; references can be reordered by dragging.
+- A sample overview brings together prompts, dimensions, seeds, LoRA scales and references, and supports reordering sample groups.
+- Images in dataset pair previews and sample previews can be opened, zoomed with their aspect ratio preserved, and panned. Left/right arrow keys navigate between images.
+- Replace opens only the image picker; clicking the image opens its preview. Replace/remove controls sit outside the thumbnail image.
 
-- 设置页增加语言切换，并在浏览器中保存选择。
-- 为主要界面和自定义预览补充中英文文本；用户提示词、路径、模型名称、配置值及训练日志保持原内容。
-- 增加批次大小、梯度累积、训练步数、优化器、学习率、权重衰减、时间步、损失、EMA、引导损失等问号说明。
-- 增加验证、缓存潜变量、正则化数据的说明，包含作用、选择建议与当前限制。
+### 3. English / Chinese UI and parameter help
 
-### 4. 分辨率与内存处理
+- Added a language switch in Settings, with the selection saved in the browser.
+- Localized the main interface and custom previews. User prompts, paths, model names, configuration values and logs retain their original contents.
+- Added help for batch size, gradient accumulation, steps, optimizers, learning rate, weight decay, timesteps, losses, EMA and guidance loss.
+- Added validation, latent caching and regularization dataset help, covering purpose, selection guidance and current limitations.
 
-- 分辨率选项扩展到 4096，并按数值顺序排列。桶分辨率表示像素面积基准，不是保证输出长边固定为该值。
-- H3 低显存路径增加可分页 CPU 权重、激活卸载和单进程 CUDA 分配预算等处理，减少加载阶段的内存压力。
-- H3 / FLUX.3 训练步遇到 OOM 时明确失败，避免跳过失败批次后仍给出具有误导性的完成结果。
-- **4K 选项不代表 4K 多参考图训练已验证可用；卸载和缓存也不能消除反向传播的显存需求。**
+### 4. Resolution and memory handling
 
-### 5. 独立运行
+- Extended resolution options to 4096 and sorted them numerically. Bucket resolution is an image-area baseline, not a fixed longest edge.
+- Added pageable CPU weights, activation offloading and per-process CUDA allocation budgets to the H3 low-VRAM path to reduce loading pressure.
+- H3 / FLUX.3 now fail explicitly on training-step OOM instead of skipping failed batches and producing misleading completion results.
+- **A 4K option does not mean 4K multi-reference training has been validated. Offloading and caching do not remove backward-pass memory requirements.**
 
-- 生产界面端口为 **8676**，方便与常用 8675 端口的原版区分。
-- 在单独目录中建立 Python 环境、数据库、数据集和输出，不需要覆盖已有的 AI Toolkit。
-- 继承了我先前自用副本中的加载兼容调整；本仓库不是上游最新版本的自动镜像。
-- 发布时去除了指向我电脑的 FLUX.2 Klein 文本编码器默认路径，恢复模型类的默认编码器来源；如需本地编码器，请配置自己的路径。
+### 5. Separate deployment
 
-## 实际验证到什么程度
+- The production UI uses **port 8676**, separate from the commonly used upstream port 8675.
+- A separate project directory holds its own Python environment, database, datasets and output; there is no need to overwrite another AI Toolkit installation.
+- This version inherits loading compatibility changes from my earlier personal copy. It is not an automatic mirror of the latest upstream release.
+- The published version removes my machine-specific FLUX.2 Klein text-encoder default path and uses the model class default source. Configure your own path if you want a local encoder.
 
-以下是截至 2026-11-17 的本机结果，显卡为 RTX 5070 Ti 16GB，系统内存约 32GB。不是硬件最低要求，也不是效果保证。
+## What has actually been tested
 
-| 项目 | 已完成情况 | 仍未证明的部分 |
+These are local results as of **2026-11-17**, on an RTX 5070 Ti 16GB with approximately 32GB system RAM. They are not minimum hardware requirements or quality guarantees.
+
+| Configuration | Observed result | Not yet demonstrated |
 | --- | --- | --- |
-| FLUX.3 Image Klein Base，4 张参考图 | 512 分辨率桶完成 6 次真实优化器更新，梯度和参数变化有效；完成四参考的 512×1024 采样 | 长训练收敛、服装细节质量、跨人物/服装泛化 |
-| FLUX.3，4 张参考图，1024 桶 | 已尝试不同层卸载比例 | 首步 OOM，没有完成训练更新 |
-| MiniMax-H3-Image，4 张参考图 | 模型加载、参考条件及采样路径通过 | 真实训练反向传播 OOM，不能宣称已成功训练出有效 LoRA |
-| 10 张参考图 | 列表传递及结构回归测试覆盖 | 未完成真实大模型的 10 参考图训练验收 |
-| 4096 分辨率桶 | 界面可配置 | 未完成 4K 真实训练验收 |
-| 中英文界面、预览与问号说明 | 类型检查、构建及浏览器交互检查通过 | 并非所有继承模型和平台都做过完整测试 |
+| FLUX.3 Image Klein Base, four references | Six real optimizer updates at a 512 bucket, with valid gradients and parameter changes; four-reference sampling at 512×1024 | Long-run convergence, clothing detail quality, generalization to new people/clothing |
+| FLUX.3, four references, 1024 bucket | Tried different layer-offloading ratios | OOM on the first step; no completed training update |
+| MiniMax-H3-Image, four references | Model loading, reference conditioning and sampling paths passed | Backward-pass OOM during real training; no claim of a successfully trained effective LoRA |
+| Ten references | List propagation and structural regression tests | Real large-model training with ten references |
+| 4096 bucket | Available in the UI | Real 4K training |
+| Bilingual UI, previews and help | Type checks, build and browser interaction checks passed | Full testing of every inherited model and platform |
 
-详细记录：[H3 多参考图](docs/H3_MULTI_REFERENCE.md)、[FLUX.3 四参考验证](docs/FLUX3_FOUR_REFERENCE.md)。文中提到的本机日志、任务、数据集与权重不随源码发布。
+Detailed records (currently in Chinese): [H3 multi-reference](docs/H3_MULTI_REFERENCE.md) and [FLUX.3 four-reference validation](docs/FLUX3_FOUR_REFERENCE.md). Local logs, jobs, datasets and weights mentioned there are not included in the repository.
 
-## 下载安装
+## Download and installation
 
-请按实际运行环境选择一份教程，按其中编号从前往后执行。三份教程分别写明了基础软件安装、终端选择、下载源码、创建和激活环境、安装依赖、首次启动、日常启动以及更新方法。
+Choose the guide for the environment where the trainer will run, then follow its numbered steps. Each guide covers prerequisites, terminal selection, downloading, environment creation and activation, dependencies, first launch, later launches and updates.
 
-| 安装方式 | 详细步骤 | 使用的终端 |
+| Environment | Step-by-step guide | Terminal |
 | --- | --- | --- |
-| **Windows 原生** | [Windows 逐步安装教程](docs/install/WINDOWS.md) | CMD 主流程，另附 PowerShell 命令 |
-| **Linux** | [Linux 逐步安装教程](docs/install/LINUX.md) | Linux Bash，以 Ubuntu 24.04 为例 |
-| **Windows 的 WSL2 Ubuntu** | [WSL2 Ubuntu 逐步安装教程](docs/install/WSL2_UBUNTU.md) | 安装 WSL 时使用 Windows PowerShell，进入 Ubuntu 后使用 Bash |
+| **Native Windows** | [Windows installation](docs/install/WINDOWS.md) | CMD main workflow; PowerShell differences included |
+| **Linux** | [Linux installation](docs/install/LINUX.md) | Bash; Ubuntu 24.04 examples |
+| **WSL2 Ubuntu on Windows** | [WSL2 Ubuntu installation](docs/install/WSL2_UBUNTU.md) | Windows PowerShell for WSL setup, then Ubuntu Bash |
 
-本机已运行环境为 WSL2 Ubuntu、Python 3.12.3、Node.js 24.14.0、PyTorch 2.13.0+cu130、torchvision 0.28.0+cu130、torchaudio 2.11.0+cu130。教程以 Python 3.12、Node.js 24 为基准；驱动和 PyTorch 构建需匹配各自平台。三平台教程并不代表三平台都已完成全新安装或所有模型训练验证。
+My working setup uses WSL2 Ubuntu, Python 3.12.3, Node.js 24.14.0, PyTorch 2.13.0+cu130, torchvision 0.28.0+cu130 and torchaudio 2.11.0+cu130. The guides target Python 3.12 and Node.js 24. Drivers and PyTorch builds must match the platform. Providing three guides does not mean fresh installations or all models have been tested on all three platforms.
 
-### 环境激活命令确实不同
+### Environment activation differs by terminal
 
-以下均在项目根目录执行，前提是已经创建 `venv`：
+Run these in the project root after creating `venv`:
 
-| 环境 / 终端 | 激活命令 |
+| Environment / terminal | Activation command |
 | --- | --- |
 | Windows CMD | `venv\Scripts\activate.bat` |
 | Windows PowerShell | `.\venv\Scripts\Activate.ps1` |
 | Linux Bash | `source venv/bin/activate` |
-| Windows 的 WSL2 Ubuntu Bash | `source venv/bin/activate` |
+| WSL2 Ubuntu Bash | `source venv/bin/activate` |
 
-WSL2 里的训练器运行在 Linux 环境，所以使用 Linux 激活命令。每次打开新的终端需要重新激活环境，但无需重新创建。Windows 与 Linux 的 `venv` 不能互相复制使用。激活方式见 [Python 官方文档](https://docs.python.org/3.12/library/venv.html)。
+The trainer runs in Linux inside WSL2, so it uses Linux activation commands. Activate again in each new terminal; do not recreate the environment each time. Windows and Linux virtual environments cannot be copied interchangeably. See the [Python venv documentation](https://docs.python.org/3.12/library/venv.html).
 
-### 首次启动与以后启动
+### First launch and later launches
 
-完成相应平台教程中的 **Python 依赖安装**后，在 `ui` 目录执行：
+After installing **Python training dependencies** using your platform guide, run this inside `ui`:
 
 ```bash
-# 第一次启动：安装界面依赖 → 初始化/同步数据库 → 构建 → 启动
+# First launch: install UI dependencies, synchronize the database, build and start
 npm run build_and_start
 ```
 
-以后普通启动，在新终端先进入项目并激活环境，再进入 `ui`：
+For subsequent normal launches, open a terminal, enter the project, activate its environment and enter `ui`, then run:
 
 ```bash
 npm run start
 ```
 
-两个命令的区别由本仓库 [ui/package.json](ui/package.json) 定义。`build_and_start` 不安装 Python 训练依赖；`start` 不更新数据库，也不重新构建。**更新代码、修改界面依赖或丢失构建产物后，要重新使用 `build_and_start`。** PowerShell 可使用 `npm.cmd run ...`，详细命令见 Windows 教程。
+These scripts are defined in [ui/package.json](ui/package.json). `build_and_start` does not install Python dependencies. `start` neither updates the database nor rebuilds the UI. **Run `build_and_start` again after code updates, UI dependency changes or removal of build artifacts.** PowerShell users can use `npm.cmd run ...`; see the Windows guide.
 
-三种方式的生产界面均为 **http://localhost:8676**。一次只启动一个本目录实例；不要在旧服务仍运行时覆盖构建文件。退出界面不一定停止独立训练进程，需要停止训练时先在界面停止并确认退出。
+The production UI is **http://localhost:8676** for all three environments. Run only one instance per project directory, and stop the old service before rebuilding. Stopping the UI may leave detached training processes running; stop the relevant jobs in the UI and confirm they have exited when needed.
 
-## 准备模型与数据集
+## Prepare models and datasets
 
-在设置页选择数据集、输出和模型目录，根据底模要求自行准备模型、文本编码器、VAE 以及训练适配器。受限模型需先在模型平台取得访问权限，再配置自己的令牌。
+Set dataset, output and model directories in Settings. Obtain the base model, text encoder, VAE and training adapter required by your chosen architecture. For gated models, obtain access from the model provider before configuring your own token.
 
-配对示例：
+Example paired dataset:
 
 ```text
 datasets/my-edit/
@@ -125,28 +127,22 @@ datasets/my-edit/
   scene/     001.png          002.png
 ```
 
-目标目录选 `target`，按提示词约定依次添加 `person`、`front`、`back`、`scene`。按文件名主体配对；标注 TXT 放在目标图旁。每个数据集配置内参考数量固定，不同数量可以拆成不同配置。一张四视图拼图仍算一张参考图。
+Select `target` as the target directory, then add `person`, `front`, `back` and `scene` in the order described by your prompts. Pairing uses filename stems; caption TXT files belong beside target images. Reference count is fixed within each dataset configuration; split different counts into separate configurations. A four-view collage is still one reference image.
 
-采样也要按自己的提示词顺序添加参考图。先用配对预览和总采样预览核对，再创建任务。小分辨率、批次 1 是排查流程是否可运行的起点，不是对大模型显存可用性的保证。
+Add sampling references in the order used by each sample prompt. Check dataset pairs and the sample overview before creating a job. Small resolutions and batch size 1 are useful for testing the workflow, but do not guarantee sufficient memory for a large model.
 
-**当前“验证”模块不传入多参考图**，不能用它完整评价多参考编辑能力；这类任务应额外使用独立参考组合、固定种子和提示词做采样对照。
+**The current validation module does not pass multiple reference images to the model.** It cannot fully evaluate multi-reference editing; also compare samples using held-out reference combinations, fixed seeds and prompts.
 
-## 更新项目
+## Updating
 
-更新步骤按平台分别放在 [Windows 教程](docs/install/WINDOWS.md#8-更新项目后启动)、[Linux 教程](docs/install/LINUX.md#9-更新项目后启动)、[WSL2 Ubuntu 教程](docs/install/WSL2_UBUNTU.md#11-更新项目后启动) 中。
+See the update instructions for [Windows](docs/install/WINDOWS.md#8-update-and-rebuild), [Linux](docs/install/LINUX.md#9-update-and-rebuild) or [WSL2 Ubuntu](docs/install/WSL2_UBUNTU.md#11-update-and-rebuild).
 
-先停止相关任务和本目录服务，备份自己的数据库与配置，再拉取源码、更新依赖并重新构建。Git 提示有个人改动时先处理，不要强制覆盖。ZIP 下载方式不支持直接 `git pull`。原项目管理器和启动脚本保留，本修改版优先使用这三份手动教程。
+Stop relevant jobs and this project's service, back up your database and configurations, then pull the source, update dependencies and rebuild. Preserve and resolve local changes if Git reports conflicts. ZIP downloads cannot be updated directly with `git pull`. Upstream manager and launcher files are retained; the three manual guides are the preferred instructions for this version.
 
-## 来源与发布范围
+## Source and publication scope
 
-当前修改版来源于本人的 AI Toolkit 自用副本，基于原项目 v0.13.42 时期代码。已核对的原项目基点为 [`4a7f28532ed6fe81d9f8c00718878bb3b8739015`](https://github.com/ostris/ai-toolkit/commit/4a7f28532ed6fe81d9f8c00718878bb3b8739015)，之后包含个人加载兼容修改、H3 / FLUX.3 多参考图改动及本仓库界面调整。
+This version comes from my personal AI Toolkit checkout, based on upstream v0.13.42-era code. The verified upstream base is [`4a7f28532ed6fe81d9f8c00718878bb3b8739015`](https://github.com/ostris/ai-toolkit/commit/4a7f28532ed6fe81d9f8c00718878bb3b8739015), followed by personal loading compatibility changes, H3 / FLUX.3 multi-reference work and UI changes.
 
-本仓库首次发布采用当前源码快照建立独立历史。保留原许可证和必要的上游源码资源；不包含私人 Git 历史、训练数据、个人模型和 LoRA、数据库、缓存、运行日志、虚拟环境及账号令牌。源码自带的 `toolkit/keymaps` 资源来自上游，属于加载所需资源，不是我的训练模型。
+The initial publication starts a separate history from a current-source snapshot. It retains the original license and required upstream resources, without private Git history, training data, personal models or LoRAs, databases, caches, runtime logs, virtual environments or account tokens. The `toolkit/keymaps` files are upstream loading resources, not my trained models.
 
-**这只是我自己改来用的训练器，公开是为了分享和交流。请按自己的模型、数据与硬件验证实际效果。**
-
-## English summary
-
-AI Toolkit Y is my personal-use modification of [Ostris AI Toolkit](https://github.com/ostris/ai-toolkit), not an official release or a new framework built from scratch. It adds ordered multi-reference workflows for H3 Image and FLUX.3, reference previews and editing, Chinese/English UI switching, parameter help, higher bucket options and local memory-handling changes. The production UI uses port **8676**.
-
-The tested setup is WSL2 Ubuntu with an NVIDIA RTX 5070 Ti 16GB. FLUX.3 completed six real updates with four references at a 512 bucket and produced a 512×1024 sample. H3 training and FLUX.3 at a 1024 bucket ran out of memory. Ten-reference training, 4K training and final LoRA quality are not validated. Separate step-by-step installation guides are provided for native Windows, Linux and WSL2 Ubuntu. The working environment is WSL2; fresh-machine installation across all three platforms has not yet been verified. Use npm run build_and_start for initial setup or rebuilding after updates, and npm run start for later normal launches. Original MIT copyright and license are retained.
+**This is simply the trainer I modified for my own use, shared for discussion and exchange. Validate results with your own models, datasets and hardware.**

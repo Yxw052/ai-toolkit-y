@@ -1,22 +1,25 @@
-# Windows 原生安装（CMD / PowerShell）
+# Native Windows installation (CMD / PowerShell)
 
-[返回项目说明](../../README.md) · [Linux](LINUX.md) · [Windows 的 WSL2 Ubuntu](WSL2_UBUNTU.md)
+**English** | [简体中文](WINDOWS.zh-CN.md)
 
-这里是在 Windows 内直接运行，不是 WSL。下方主流程全部使用 **命令提示符 CMD**；PowerShell 的区别放在最后。作者实际训练验证环境是 WSL2 Ubuntu，Windows 原生完整安装与各模型训练尚未独立验收；遇到平台专用依赖问题时可以改用 WSL2 教程。
+[Project overview](../../README.md) · [Windows](WINDOWS.md) · [Linux](LINUX.md) · [WSL2 Ubuntu](WSL2_UBUNTU.md)
 
-## 1. 安装基础软件
+This guide runs the trainer directly on Windows, not inside WSL. The main workflow uses **Command Prompt (CMD)**; PowerShell differences are explained at the end. The author's training validation used WSL2 Ubuntu. A complete native Windows installation and model training have not been independently validated; use the WSL2 guide if you encounter platform-specific dependency limitations.
 
-1. 安装适合显卡的 [NVIDIA Windows 驱动](https://www.nvidia.com/drivers/)，安装器要求重启时完成重启。
-2. 安装 [Git for Windows](https://git-scm.com/downloads/win)，安装时允许在命令行使用 Git。
-3. 从 [Python Windows 下载页](https://www.python.org/downloads/windows/) 安装 **Python 3.12，64 位版本**，启用 Python Launcher，并勾选加入 PATH。不要因为系统已有其他 Python 版本就跳过版本检查。
-4. 从 [Node.js 官网](https://nodejs.org/en/download) 选择 **Node.js 24 LTS 的 Windows Installer（.msi）**，安装 npm。这里固定使用 24，不要默认选择网页上的其他主版本。
-5. 从 [FFmpeg 下载页](https://ffmpeg.org/download.html#build-windows) 进入其链接的 Windows 构建下载，解压并将包含 `ffmpeg.exe` 的 `bin` 目录加入用户 PATH。
+## 1. Install prerequisites
 
-全部安装后重新打开终端，让 PATH 生效。不需要照搬 Linux 的 `apt` 命令。
+1. Install the appropriate [NVIDIA Windows driver](https://www.nvidia.com/drivers/) and restart if requested.
+2. Install [Git for Windows](https://git-scm.com/downloads/win), allowing Git to be used from the command line.
+3. Install **64-bit Python 3.12** from the [Python Windows downloads page](https://www.python.org/downloads/windows/). Enable the Python Launcher and add Python to PATH. Check the version even if another Python is already installed.
+4. From the [Node.js website](https://nodejs.org/en/download), select the **Node.js 24 LTS Windows Installer (.msi)** and install npm. Select version 24 explicitly rather than accepting a different major version offered by the page.
+5. Follow the Windows build links on the [FFmpeg downloads page](https://ffmpeg.org/download.html#build-windows), extract a build and add the `bin` directory containing `ffmpeg.exe` to your user PATH.
 
-## 2. 打开 CMD 并检查工具
+Open a new terminal after installation so PATH changes take effect. Do not use Linux `apt` commands on native Windows.
 
-按 `Win+R`，输入 `cmd` 并回车。逐条执行：
+## 2. Open CMD and check tools
+
+Press `Win+R`, enter `cmd`, then press Enter. Run each command:
+
 
 ```bat
 git --version
@@ -27,11 +30,12 @@ ffmpeg -version
 nvidia-smi
 ```
 
-确认 Python 为 3.12、Node.js 为 24，并且显卡能被识别。任何命令提示“不是内部或外部命令”时，先修复软件安装或 PATH，再继续。
+Confirm Python 3.12, Node.js 24 and a recognized GPU. If a command is not recognized, fix its installation or PATH before continuing.
 
-## 3. 下载源码
+## 3. Download the source
 
-以下默认安装到 Windows 用户目录：
+These commands install into your Windows user directory:
+
 
 ```bat
 cd /d "%USERPROFILE%"
@@ -39,11 +43,12 @@ git clone https://github.com/Yxw052/ai-toolkit-y.git
 cd ai-toolkit-y
 ```
 
-如需安装到其他盘，可先执行例如 `cd /d D:\AI`（目录需要事先存在），再克隆。已有同名目录时改用新目录名，后面的启动路径也相应修改。
+For another drive, first enter an existing directory, for example `cd /d D:\AI`, then clone. If the target directory already exists, choose a new name and update the later startup paths.
 
-## 4. 创建并激活 Python 环境
+## 4. Create and activate the Python environment
 
-仍在刚才的 CMD、项目根目录执行：
+In the same CMD window, from the project root:
+
 
 ```bat
 py -3.12 -m venv venv
@@ -52,11 +57,12 @@ python --version
 python -c "import sys; print(sys.executable)"
 ```
 
-应显示 Python 3.12，解释器路径应以 `ai-toolkit-y\venv\Scripts\python.exe` 结尾。新终端中需要重新激活，但不需要重建环境。
+Confirm Python 3.12 and an executable path ending in `ai-toolkit-y\venv\Scripts\python.exe`. Activate again in new terminals, but do not recreate the environment.
 
-## 5. 安装 Python 训练依赖
+## 5. Install Python training dependencies
 
-先激活本项目的 `venv`，确认当前目录是 `ai-toolkit-y` 根目录，再逐条执行：
+With this project's `venv` active, run the following from the `ai-toolkit-y` root, one command at a time:
+
 
 ```bat
 python -m pip install --upgrade pip setuptools wheel
@@ -66,30 +72,32 @@ python -m pip check
 python -c "import torch; print(torch.__version__); print('CUDA available:', torch.cuda.is_available())"
 ```
 
-上面 PyTorch / CUDA 13.0 组合来自作者已运行的 WSL 环境，并不是任意系统、显卡和驱动的通用组合。安装器报告没有对应 wheel，或 CUDA 不可用时，先按 [PyTorch 官方安装页](https://pytorch.org/get-started/locally/) 核对该平台支持的匹配版本，不要直接忽略错误或随意只更换其中一个包。
+The PyTorch / CUDA 13.0 combination above comes from the author's working WSL environment; it is not universal across operating systems, GPUs and drivers. If no matching wheel is available or CUDA is unavailable, check the [official PyTorch installation guidance](https://pytorch.org/get-started/locally/) for a compatible combination. Do not ignore the error or change just one package arbitrarily.
 
-最后应显示 `CUDA available: True`。`pip check` 若报告冲突，先解决再继续。下载 Python 依赖并不包含完整底模、训练适配器或训练数据。
+The final command should print `CUDA available: True`. Resolve any `pip check` conflicts before continuing. Installing Python packages does not download the complete base model, training adapter or dataset.
 
-若某个依赖提示需要 C++ 编译器，可按报错安装 [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)，选择“使用 C++ 的桌面开发”和 Windows SDK。编译工具不会让原本只支持 Linux 的依赖自动支持 Windows；此类问题需核对具体依赖或改用 WSL2。
+If a dependency requires a C++ compiler, install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the Desktop development with C++ workload and Windows SDK as directed by the error. Build tools cannot make a Linux-only dependency compatible with Windows; check the package or use WSL2 in that case.
 
-## 6. 第一次启动界面
+## 6. First UI launch
 
-在刚才已经激活环境的终端、项目根目录内执行：
+From the project root in the activated terminal:
+
 
 ```bat
 cd ui
 npm run build_and_start
 ```
 
-**第一次启动使用 `npm run build_and_start`。** 它依次执行界面依赖安装、Prisma 客户端生成和数据库初始化/同步、界面构建、服务启动，无需预先手动执行 `npm install`。它不会代替前面的 Python 依赖安装。
+**Use `npm run build_and_start` for the first launch.** It installs UI dependencies, generates the Prisma client, initializes/synchronizes the database, builds the UI and starts the service. You do not need a separate `npm install` first. It does not replace Python dependency installation.
 
-保持终端开启，等待构建成功和服务就绪，再打开 **http://localhost:8676**。仅看到网页不等于模型已经可以训练，还需配置模型与数据。
+Keep the terminal open. Wait for a successful build and service startup, then open **http://localhost:8676**. A working page does not mean your model is ready to train; models and datasets still need configuration.
 
-首次运行会在本项目内创建 `aitk_db.db`；默认使用本项目的 `output`、`datasets`、`models` 目录，可在设置页调整。不要把其他训练器的数据库或虚拟环境复制进来。
+The database is created as `aitk_db.db` in the project root. Default directories are `output`, `datasets` and `models` inside this project and can be changed in Settings. Do not copy another trainer's database or virtual environment into this installation.
 
-## 7. 以后正常启动
+## 7. Later launches
 
-新开 CMD，按默认安装路径执行：
+Open a new CMD window and, for the default installation path, run:
+
 
 ```bat
 cd /d "%USERPROFILE%\ai-toolkit-y"
@@ -98,11 +106,13 @@ cd ui
 npm run start
 ```
 
-如果安装在其他盘，把第一行换成自己的实际路径。浏览器打开 http://localhost:8676。
+Replace the first line with your actual path if installed elsewhere. Open http://localhost:8676 in your browser.
 
-## 8. 更新项目后启动
+## 8. Update and rebuild
 
-先在界面停止相关训练并确认退出，再 `Ctrl+C` 结束本目录界面服务。备份 `aitk_db.db`、自己的任务配置与重要输出后，在 CMD 执行：
+Stop relevant training jobs in the UI and confirm they have exited, then stop this project's UI service with `Ctrl+C`. Back up `aitk_db.db`, your job configurations and important output before running:
+Use CMD:
+
 
 ```bat
 cd /d "%USERPROFILE%\ai-toolkit-y"
@@ -114,11 +124,12 @@ cd ui
 npm run build_and_start
 ```
 
-每一步成功后再继续。不要在旧服务运行时覆盖构建文件，Git 提示个人修改冲突时不要强制覆盖。
+Resolve errors before continuing; do not start an old build after a failed update. If Git reports local changes or divergent branches, preserve and reconcile them rather than overwriting them. Never rebuild this directory while its old service is still running.
 
-## 9. 如果使用 PowerShell
+## 9. Using PowerShell
 
-PowerShell 的激活脚本是 `.ps1`，不是 CMD 的 `.bat`。以下是**已经安装和构建完成后**的普通启动：
+PowerShell activation uses the `.ps1` script instead of CMD's `.bat` script. After installation and the first successful build, a normal launch is:
+
 
 ```powershell
 Set-Location "$env:USERPROFILE\ai-toolkit-y"
@@ -127,16 +138,16 @@ Set-Location ui
 npm.cmd run start
 ```
 
-首次启动时最后一行使用 `npm.cmd run build_and_start`。`npm.cmd` 可避免误执行受 PowerShell 脚本策略限制的 `npm.ps1`。如果 `Activate.ps1` 被策略阻止，可以直接使用上面的 CMD 流程，不必修改系统执行策略。两种终端使用同一个 Windows `venv`。
+For the first launch, use `npm.cmd run build_and_start` on the last line. Using `npm.cmd` avoids accidentally invoking `npm.ps1` under PowerShell script restrictions. If `Activate.ps1` is blocked by policy, use the CMD workflow above without changing system execution policy. Both terminals use the same Windows `venv`.
 
-环境命令依据 [Python 官方 venv 文档](https://docs.python.org/3.12/library/venv.html)。
+Activation commands follow the [Python venv documentation](https://docs.python.org/3.12/library/venv.html).
 
-## 使用与停止
+## Use and shutdown
 
-- 下一步：[准备模型与多参考图数据集](../../README.md#准备模型与数据集)。
-- 普通重开终端时需要重新激活环境；不要每次重新创建 `venv`。
-- `npm run start` 要求已经成功构建。它不会安装依赖、更新数据库或重新编译源码。
-- 更新代码、变更界面依赖、删除构建产物后，应重新运行 `npm run build_and_start`。
-- 只保留一个本目录的界面实例。`Ctrl+C` 结束前台界面服务，但独立训练进程可能继续运行；需要停止训练时，先在界面停止对应任务并确认退出。
-- 端口占用时先检查已有的 Y 服务，不要直接结束其他训练器或其他程序。
-- 可从 GitHub **Code → Download ZIP** 下载源码。解压后在含 `requirements.txt` 的目录继续创建环境；ZIP 下载方式不能直接用 `git pull` 更新。
+- Next: [prepare models and multi-reference datasets](../../README.md#prepare-models-and-datasets).
+- Activate the environment again when opening a new terminal; do not recreate `venv` each time.
+- `npm run start` requires a successful build. It does not install dependencies, update the database or recompile the source.
+- Run `npm run build_and_start` again after code updates, UI dependency changes or removal of build artifacts.
+- Run only one UI instance per project directory. `Ctrl+C` stops the foreground UI service, but detached training jobs may continue. Stop relevant jobs in the UI first and confirm they have exited when needed.
+- If the port is occupied, check for an existing Y service before stopping anything; do not terminate unrelated trainers or programs.
+- You can also download source using GitHub **Code → Download ZIP**. Extract it, enter the directory containing `requirements.txt`, then continue from environment creation. ZIP downloads cannot be updated directly with `git pull`.

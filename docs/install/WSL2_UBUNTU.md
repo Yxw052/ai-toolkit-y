@@ -1,71 +1,81 @@
-# Windows 的 WSL2 Ubuntu 安装
+# WSL2 Ubuntu installation on Windows
 
-[返回项目说明](../../README.md) · [Windows 原生](WINDOWS.md) · [Linux](LINUX.md)
+**English** | [简体中文](WSL2_UBUNTU.zh-CN.md)
 
-这里是在 Windows 上安装 WSL2，再在里面的 Ubuntu 运行训练器，最后使用 Windows 浏览器访问。作者实际使用的是这条路线，但以下全新安装流程尚未在一台新机器上从头验收。
+[Project overview](../../README.md) · [Windows](WINDOWS.md) · [Linux](LINUX.md) · [WSL2 Ubuntu](WSL2_UBUNTU.md)
 
-**步骤 1–2 在 Windows PowerShell 中进行；步骤 3 开始在 Ubuntu 的 Bash 终端进行。** Windows 和 Ubuntu 各有自己的 Python、Node.js、文件路径和环境，不能混用。
+Install WSL2 on Windows, run the trainer inside Ubuntu, and access it from a Windows browser. This is the author's working setup, but the complete fresh-install procedure below has not been validated on a new machine from start to finish.
 
-## 1. 准备 Windows 与驱动
+**Use Windows PowerShell for steps 1–2. From step 3 onward, use Ubuntu Bash.** Windows and Ubuntu have separate Python/Node.js installations, paths and environments; do not mix them.
 
-使用支持 WSL2 GPU 的 Windows 10/11，并在 **Windows** 安装适合显卡的 [NVIDIA 驱动](https://www.nvidia.com/drivers/)。新环境建议使用已更新的 Windows 11。
+## 1. Prepare Windows and the GPU driver
 
-在 Windows PowerShell 检查：
+Use Windows 10/11 with WSL2 GPU support and install the appropriate [NVIDIA driver](https://www.nvidia.com/drivers/) on **Windows**. An up-to-date Windows 11 installation is recommended for a new setup.
+
+Check in Windows PowerShell:
+
 
 ```powershell
 nvidia-smi
 ```
 
-## 2. 安装或检查 WSL2 Ubuntu
 
-### 尚未安装 WSL
+## 2. Install or check WSL2 Ubuntu
 
-以管理员身份打开 Windows PowerShell，先查询可安装名称：
+### If WSL is not installed
+
+Open Windows PowerShell as administrator and list available distribution names:
+
 
 ```powershell
 wsl --list --online
 ```
 
-下面以列表中的 `Ubuntu-24.04` 为例安装：
+Install using a name from that list; this example uses `Ubuntu-24.04`:
+
 
 ```powershell
 wsl --install -d Ubuntu-24.04
 ```
 
-按 Windows 提示重启，再从开始菜单打开 **Ubuntu 24.04**，等待初始化并创建 Linux 用户名与密码。输入密码时终端不显示字符是正常现象。安装命令和发行版选择参考 [Microsoft 官方教程](https://learn.microsoft.com/en-us/windows/wsl/install)。
+Restart Windows if prompted. Open Ubuntu 24.04 from the Start menu, wait for initialization, then create a Linux username and password. Password input is not echoed. See [Microsoft's WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install) for installation commands and distribution choices.
 
-### 已安装 WSL
+### If WSL is already installed
 
-不用重复安装 Ubuntu。先在 Windows PowerShell 检查：
+Do not reinstall Ubuntu. Check it in Windows PowerShell:
+
 
 ```powershell
 wsl --list --verbose
 ```
 
-确认要使用的发行版右侧 `VERSION` 为 **2**，并记住实际名称，例如 `Ubuntu` 或 `Ubuntu-24.04`。如果显示 1，请在退出该发行版中的任务后使用 `wsl --set-version Ubuntu 2` 转换；把 `Ubuntu` 换成实际名称。
+The intended distribution should show **2** under `VERSION`. Note its actual name, such as `Ubuntu` or `Ubuntu-24.04`. If it shows 1, exit tasks in that distribution before converting with `wsl --set-version Ubuntu 2`, replacing `Ubuntu` with the actual name.
 
-新装或需要更新 WSL 内核时，在没有相关任务运行后执行：
+For a new installation or a needed kernel update, run this when no related tasks are running:
+
 
 ```powershell
 wsl --update
 ```
 
-从开始菜单进入对应 Ubuntu，或在 PowerShell 执行 `wsl -d Ubuntu-24.04`。已有名为 `Ubuntu` 的发行版就执行 `wsl -d Ubuntu`。
+Enter the distribution from the Start menu or with `wsl -d Ubuntu-24.04` in PowerShell. For a distribution named `Ubuntu`, use `wsl -d Ubuntu`.
 
-## 3. 在 Ubuntu 内确认系统与显卡
+## 3. Check Ubuntu and GPU access
 
-从这一步起，全部使用 **Ubuntu Bash**：
+From this step onward, use **Ubuntu Bash**:
+
 
 ```bash
 cat /etc/os-release
 nvidia-smi
 ```
 
-若仅找不到 `nvidia-smi` 命令，可试 `/usr/lib/wsl/lib/nvidia-smi`。仍无法识别时，先处理 Windows 驱动和 WSL2 状态。
+If only the command is missing, try `/usr/lib/wsl/lib/nvidia-smi`. If GPU access still fails, resolve the Windows driver and WSL2 setup first.
 
-**不要在 WSL 中安装 NVIDIA Linux 显卡驱动。** WSL 使用 Windows 提供的驱动接口，参见 [NVIDIA CUDA on WSL 指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。
+**Do not install NVIDIA Linux display drivers inside WSL.** It uses the driver interface provided by Windows. See the [NVIDIA CUDA on WSL guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html).
 
-## 4. 在 Ubuntu 安装系统依赖和 Python
+## 4. Install system dependencies and Python in Ubuntu
+
 
 ```bash
 sudo apt update
@@ -75,13 +85,14 @@ git --version
 ffmpeg -version
 ```
 
-这些包名以 **Ubuntu 24.04** 为例。其他 Linux 发行版需使用对应包管理器；Ubuntu 22.04 等环境可能没有系统自带 Python 3.12，请先准备独立的 Python 3.12，不要替换系统 Python。
+These package names target **Ubuntu 24.04**. Other Linux distributions require their own package manager. Older Ubuntu versions such as 22.04 may not provide Python 3.12 in the default repositories; prepare a separate Python 3.12 installation without replacing the system Python.
 
-## 5. 在 Ubuntu 安装 Node.js 与 npm
+## 5. Install Node.js and npm in Ubuntu
 
-在当前 Linux 的 Bash 终端安装 Node.js 24。已有 Linux 版 Node.js 24 和 npm 时，可直接执行版本检查并跳过安装。
+Install Node.js 24 in the current Linux Bash terminal. If Linux-native Node.js 24 and npm are already installed, check their versions and skip installation.
 
-以下安装脚本来自 [nvm 官方仓库](https://github.com/nvm-sh/nvm#installing-and-updating)，先下载再执行：
+The script below comes from the [official nvm repository](https://github.com/nvm-sh/nvm#installing-and-updating). Download it before running it:
+
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.41.0/install.sh -o /tmp/aitk-y-nvm-install.sh
@@ -93,18 +104,20 @@ node --version
 npm --version
 ```
 
-Node.js 应显示 `v24.x`。若当前窗口找不到 `nvm`，重新打开 Bash 终端后再执行 `nvm use 24`。也可从 [Node.js 官网](https://nodejs.org/en/download) 安装适合本机架构的 Linux 版本。
+Node.js should report `v24.x`. If `nvm` is not found, open a new Bash terminal and run `nvm use 24`. Alternatively, install the Linux build for your architecture from the [Node.js website](https://nodejs.org/en/download).
 
-额外检查命令路径：
+Also check the executable paths:
+
 
 ```bash
 command -v node
 command -v npm
 ```
 
-路径应指向 Ubuntu 内的程序（例如 `/home/你的用户名/.nvm/...`），不应使用 `/mnt/c/.../node.exe` 或 Windows 的 npm。Windows 已装 Node.js 不代表 Ubuntu 已装。
+They should point inside Ubuntu, for example `/home/your-user/.nvm/...`, rather than `/mnt/c/.../node.exe` or Windows npm. Installing Node.js on Windows does not install it in Ubuntu.
 
-## 6. 将项目下载到 Ubuntu 文件系统
+## 6. Download into Ubuntu's filesystem
+
 
 ```bash
 cd ~
@@ -112,11 +125,12 @@ git clone https://github.com/Yxw052/ai-toolkit-y.git
 cd ai-toolkit-y
 ```
 
-以上安装到 `~/ai-toolkit-y`。已有同名目录时，请另选目录名，并同步修改后续 `cd` 命令，避免覆盖已有训练器。
+This installs to `~/ai-toolkit-y`. If that directory already exists, choose a different directory name and adjust subsequent `cd` commands rather than overwriting an existing trainer.
 
-建议将源码和环境放在 Ubuntu 的 `~` 下，不放在 `/mnt/c` 中，以减少跨文件系统访问开销。Windows 资源管理器可以通过 `\\wsl.localhost\发行版名称\home\你的Linux用户名\ai-toolkit-y` 查看文件。
+Keep the source and environment under Ubuntu's home directory rather than `/mnt/c` to reduce cross-filesystem overhead. Windows File Explorer can access it at `\\wsl.localhost\distribution-name\home\linux-user\ai-toolkit-y`.
 
-## 7. 创建并激活 Ubuntu 的 Python 环境
+## 7. Create and activate the Ubuntu Python environment
+
 
 ```bash
 python3.12 -m venv venv
@@ -125,13 +139,14 @@ python --version
 python -c "import sys; print(sys.executable)"
 ```
 
-Python 路径应指向本项目的 `venv/bin/python`。这里是 Linux / Bash，激活命令是 `source venv/bin/activate`，不能使用 Windows 的 `Scripts` 路径。
+The Python executable should point to this project's `venv/bin/python`. In Linux Bash, activate with `source venv/bin/activate`, not the Windows `Scripts` path.
 
-不要复制 Windows 的 `venv`，也不要复制原版训练器的环境目录。
+Do not copy a Windows `venv` or another trainer's environment directory.
 
-## 8. 安装 Python 训练依赖
+## 8. Install Python training dependencies
 
-先激活本项目的 `venv`，确认当前目录是 `ai-toolkit-y` 根目录，再逐条执行：
+With this project's `venv` active, run each command from the `ai-toolkit-y` root:
+
 
 ```bash
 python -m pip install --upgrade pip setuptools wheel
@@ -141,32 +156,32 @@ python -m pip check
 python -c "import torch; print(torch.__version__); print('CUDA available:', torch.cuda.is_available())"
 ```
 
-上面 PyTorch / CUDA 13.0 组合来自作者已运行的 WSL 环境，并不是任意系统、显卡和驱动的通用组合。安装器报告没有对应 wheel，或 CUDA 不可用时，先按 [PyTorch 官方安装页](https://pytorch.org/get-started/locally/) 核对该平台支持的匹配版本，不要直接忽略错误或随意只更换其中一个包。
+The PyTorch / CUDA 13.0 combination above comes from the author's working WSL environment; it is not universal across operating systems, GPUs and drivers. If no matching wheel is available or CUDA is unavailable, check the [official PyTorch installation guidance](https://pytorch.org/get-started/locally/) for a compatible combination. Do not ignore the error or change just one package arbitrarily.
 
-最后应显示 `CUDA available: True`。`pip check` 若报告冲突，先解决再继续。下载 Python 依赖并不包含完整底模、训练适配器或训练数据。
+The final command should print `CUDA available: True`. Resolve any `pip check` conflicts before continuing. Installing Python packages does not download the complete base model, training adapter or dataset.
 
-## 9. 第一次启动界面
+## 9. First UI launch
 
-在刚才已经激活环境的终端、项目根目录内执行：
+From the project root in the activated Ubuntu terminal:
+
 
 ```bash
 cd ui
 npm run build_and_start
 ```
 
-**第一次启动使用 `npm run build_and_start`。** 它依次执行界面依赖安装、Prisma 客户端生成和数据库初始化/同步、界面构建、服务启动，无需预先手动执行 `npm install`。它不会代替前面的 Python 依赖安装。
+**Use `npm run build_and_start` for the first launch.** It installs UI dependencies, generates the Prisma client, initializes/synchronizes the database, builds the UI and starts the service. You do not need a separate `npm install` first. It does not replace Python dependency installation.
 
-保持终端开启，等待构建成功和服务就绪，再打开 **http://localhost:8676**。仅看到网页不等于模型已经可以训练，还需配置模型与数据。
+Keep the terminal open. Wait for a successful build and service startup, then open **http://localhost:8676**. A working page does not mean your model is ready to train; models and datasets still need configuration.
 
-首次运行会在本项目内创建 `aitk_db.db`；默认使用本项目的 `output`、`datasets`、`models` 目录，可在设置页调整。不要把其他训练器的数据库或虚拟环境复制进来。
+The database is created as `aitk_db.db` in the project root. Default directories are `output`, `datasets` and `models` inside this project and can be changed in Settings. Do not copy another trainer's database or virtual environment into this installation.
 
-在 **Windows 浏览器**打开 http://localhost:8676，Ubuntu 终端保持运行。
+Open http://localhost:8676 in your **Windows browser**, keeping the Ubuntu terminal running.
 
-## 10. 以后正常启动
+## 10. Later launches
 
-先从 Windows 开始菜单打开安装时使用的 Ubuntu，然后：
+Open the same Ubuntu distribution from the Windows Start menu, then run in Bash:
 
-新开 Bash 终端后执行：
 
 ```bash
 cd ~/ai-toolkit-y
@@ -175,11 +190,13 @@ cd ui
 npm run start
 ```
 
-打开 http://localhost:8676。后续普通启动不必重复安装依赖和构建。
+Open http://localhost:8676. Normal later launches do not require reinstalling dependencies or rebuilding.
 
-## 11. 更新项目后启动
+## 11. Update and rebuild
 
-先在界面停止相关训练并确认退出，再用 `Ctrl+C` 结束本目录界面服务。备份自己的 `aitk_db.db`、任务配置和重要输出后，在 Bash 终端执行：
+Stop relevant training jobs in the UI and confirm they have exited, then stop this project's UI service with `Ctrl+C`. Back up `aitk_db.db`, your job configurations and important output before running:
+Use Ubuntu Bash:
+
 
 ```bash
 cd ~/ai-toolkit-y
@@ -191,14 +208,14 @@ cd ui
 npm run build_and_start
 ```
 
-任一步失败都先处理错误，不要继续启动旧构建。若 Git 提示有自己的修改或分支分歧，先保存并合并修改，不要强制覆盖。不要在旧服务运行时重新构建同一个目录。
+Resolve errors before continuing; do not start an old build after a failed update. If Git reports local changes or divergent branches, preserve and reconcile them rather than overwriting them. Never rebuild this directory while its old service is still running.
 
-## 使用与停止
+## Use and shutdown
 
-- 下一步：[准备模型与多参考图数据集](../../README.md#准备模型与数据集)。
-- 普通重开终端时需要重新激活环境；不要每次重新创建 `venv`。
-- `npm run start` 要求已经成功构建。它不会安装依赖、更新数据库或重新编译源码。
-- 更新代码、变更界面依赖、删除构建产物后，应重新运行 `npm run build_and_start`。
-- 只保留一个本目录的界面实例。`Ctrl+C` 结束前台界面服务，但独立训练进程可能继续运行；需要停止训练时，先在界面停止对应任务并确认退出。
-- 端口占用时先检查已有的 Y 服务，不要直接结束其他训练器或其他程序。
-- 可从 GitHub **Code → Download ZIP** 下载源码。解压后在含 `requirements.txt` 的目录继续创建环境；ZIP 下载方式不能直接用 `git pull` 更新。
+- Next: [prepare models and multi-reference datasets](../../README.md#prepare-models-and-datasets).
+- Activate the environment again when opening a new terminal; do not recreate `venv` each time.
+- `npm run start` requires a successful build. It does not install dependencies, update the database or recompile the source.
+- Run `npm run build_and_start` again after code updates, UI dependency changes or removal of build artifacts.
+- Run only one UI instance per project directory. `Ctrl+C` stops the foreground UI service, but detached training jobs may continue. Stop relevant jobs in the UI first and confirm they have exited when needed.
+- If the port is occupied, check for an existing Y service before stopping anything; do not terminate unrelated trainers or programs.
+- You can also download source using GitHub **Code → Download ZIP**. Extract it, enter the directory containing `requirements.txt`, then continue from environment creation. ZIP downloads cannot be updated directly with `git pull`.
