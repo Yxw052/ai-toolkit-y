@@ -68,80 +68,49 @@
 
 ## 下载安装
 
-### 环境
+请按实际运行环境选择一份教程，按其中编号从前往后执行。三份教程分别写明了基础软件安装、终端选择、下载源码、创建和激活环境、安装依赖、首次启动、日常启动以及更新方法。
 
-主要使用方式是 **Linux / Windows 的 WSL2 Ubuntu + NVIDIA GPU**。先确保终端中 `nvidia-smi` 可以识别显卡。
+| 安装方式 | 详细步骤 | 使用的终端 |
+| --- | --- | --- |
+| **Windows 原生** | [Windows 逐步安装教程](docs/install/WINDOWS.md) | CMD 主流程，另附 PowerShell 命令 |
+| **Linux** | [Linux 逐步安装教程](docs/install/LINUX.md) | Linux Bash，以 Ubuntu 24.04 为例 |
+| **Windows 的 WSL2 Ubuntu** | [WSL2 Ubuntu 逐步安装教程](docs/install/WSL2_UBUNTU.md) | 安装 WSL 时使用 Windows PowerShell，进入 Ubuntu 后使用 Bash |
 
-本机已运行的环境：Python 3.12.3、Node.js 24.14.0、PyTorch 2.13.0+cu130、torchvision 0.28.0+cu130、torchaudio 2.11.0+cu130。建议使用 Python 3.12；本项目固定的部分依赖不适合直接套用更新的 Python 版本。
+本机已运行环境为 WSL2 Ubuntu、Python 3.12.3、Node.js 24.14.0、PyTorch 2.13.0+cu130、torchvision 0.28.0+cu130、torchaudio 2.11.0+cu130。教程以 Python 3.12、Node.js 24 为基准；驱动和 PyTorch 构建需匹配各自平台。三平台教程并不代表三平台都已完成全新安装或所有模型训练验证。
 
-下面是依据现有环境整理的手动安装流程，尚未在一台全新机器上完整复现。CUDA 构建需要匹配驱动与显卡，其他环境请参考 [PyTorch 安装说明](https://pytorch.org/get-started/locally/)。
+### 环境激活命令确实不同
 
-### 1. 下载到独立目录
+以下均在项目根目录执行，前提是已经创建 `venv`：
 
-在 Ubuntu / WSL 终端执行。已有同名目录时请换一个目录名，不要覆盖正在使用的训练器。
+| 环境 / 终端 | 激活命令 |
+| --- | --- |
+| Windows CMD | `venv\Scripts\activate.bat` |
+| Windows PowerShell | `.\venv\Scripts\Activate.ps1` |
+| Linux Bash | `source venv/bin/activate` |
+| Windows 的 WSL2 Ubuntu Bash | `source venv/bin/activate` |
+
+WSL2 里的训练器运行在 Linux 环境，所以使用 Linux 激活命令。每次打开新的终端需要重新激活环境，但无需重新创建。Windows 与 Linux 的 `venv` 不能互相复制使用。激活方式见 [Python 官方文档](https://docs.python.org/3.12/library/venv.html)。
+
+### 首次启动与以后启动
+
+完成相应平台教程中的 **Python 依赖安装**后，在 `ui` 目录执行：
 
 ```bash
-cd ~
-git clone https://github.com/Yxw052/ai-toolkit-y.git
-cd ai-toolkit-y
+# 第一次启动：安装界面依赖 → 初始化/同步数据库 → 构建 → 启动
+npm run build_and_start
 ```
 
-也可以在 GitHub 点击 **Code → Download ZIP** 下载，但 ZIP 方式不能直接使用 `git pull` 更新。
-
-### 2. 创建 Python 环境并安装依赖
-
-预先安装 Git、Python 3.12 及对应的 venv 支持，以及 Node.js/npm。Ubuntu 24.04 可用以下系统依赖命令；其他发行版按自己的包管理器安装：
+以后普通启动，在新终端先进入项目并激活环境，再进入 `ui`：
 
 ```bash
-sudo apt update
-sudo apt install -y git python3.12-venv python3-pip build-essential ffmpeg libgl1 libglib2.0-0
-python3.12 -m venv venv
-source venv/bin/activate
-python -m pip install --upgrade pip setuptools wheel
-
-# 与本机环境对应的 CUDA 13.0 组合；其他 GPU/驱动请先核对适用性
-python -m pip install torch==2.13.0 torchvision==0.28.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu130
-python -m pip install -r requirements.txt
-python -m pip check
-python -c "import torch; print(torch.__version__); print('CUDA available:', torch.cuda.is_available())"
-```
-
-不要复制原训练器的 `venv`，也不要混用原训练器的 Python 环境。这里不会下载完整底模或你的训练数据。
-
-### 3. 安装并启动界面
-
-安装 Node.js 22 或 24 LTS 后确认 `node --version`、`npm --version` 可用。本机使用 Node.js 24。
-
-在项目根目录执行：
-
-```bash
-source venv/bin/activate
-cd ui
-npm ci
-npm run update_db
-npm run build
 npm run start
 ```
 
-打开 **http://localhost:8676**。WSL 用户可在 Windows 浏览器打开该地址。
+两个命令的区别由本仓库 [ui/package.json](ui/package.json) 定义。`build_and_start` 不安装 Python 训练依赖；`start` 不更新数据库，也不重新构建。**更新代码、修改界面依赖或丢失构建产物后，要重新使用 `build_and_start`。** PowerShell 可使用 `npm.cmd run ...`，详细命令见 Windows 教程。
 
-- 数据库由初始化命令创建在项目根目录 `aitk_db.db`。
-- 默认输出目录为项目内 `output`，数据集目录为 `datasets`，模型目录为 `models`。可在设置页修改。
-- 当前源码不会包含原作者机器上的任务、模型、数据集或令牌。
-- 保持一个界面/队列服务实例运行；不要重复启动同一目录。
+三种方式的生产界面均为 **http://localhost:8676**。一次只启动一个本目录实例；不要在旧服务仍运行时覆盖构建文件。退出界面不一定停止独立训练进程，需要停止训练时先在界面停止并确认退出。
 
-以后启动无需重复安装和构建：
-
-```bash
-cd ~/ai-toolkit-y
-source venv/bin/activate
-cd ui
-npm run start
-```
-
-终端 `Ctrl+C` 可结束前台界面服务；独立训练进程可能继续运行。需要停止训练时，先在界面停止对应任务并确认退出。
-
-### 4. 准备模型与数据集
+## 准备模型与数据集
 
 在设置页选择数据集、输出和模型目录，根据底模要求自行准备模型、文本编码器、VAE 以及训练适配器。受限模型需先在模型平台取得访问权限，再配置自己的令牌。
 
@@ -162,23 +131,11 @@ datasets/my-edit/
 
 **当前“验证”模块不传入多参考图**，不能用它完整评价多参考编辑能力；这类任务应额外使用独立参考组合、固定种子和提示词做采样对照。
 
-### 更新
+## 更新项目
 
-先停止需要停止的训练任务，退出本目录的界面服务，备份自己的数据库和配置，再执行：
+更新步骤按平台分别放在 [Windows 教程](docs/install/WINDOWS.md#8-更新项目后启动)、[Linux 教程](docs/install/LINUX.md#9-更新项目后启动)、[WSL2 Ubuntu 教程](docs/install/WSL2_UBUNTU.md#11-更新项目后启动) 中。
 
-```bash
-cd ~/ai-toolkit-y
-git pull --ff-only
-source venv/bin/activate
-python -m pip install -r requirements.txt
-cd ui
-npm ci
-npm run update_db
-npm run build
-npm run start
-```
-
-不要在旧界面仍运行时覆盖构建产物，可能造成静态文件或样式加载失败。有自己的代码改动时先处理 Git 提示，不要强制覆盖。原项目的安装脚本和管理器文件保留供参考，本修改版优先使用以上手动流程。
+先停止相关任务和本目录服务，备份自己的数据库与配置，再拉取源码、更新依赖并重新构建。Git 提示有个人改动时先处理，不要强制覆盖。ZIP 下载方式不支持直接 `git pull`。原项目管理器和启动脚本保留，本修改版优先使用这三份手动教程。
 
 ## 来源与发布范围
 
@@ -192,4 +149,4 @@ npm run start
 
 AI Toolkit Y is my personal-use modification of [Ostris AI Toolkit](https://github.com/ostris/ai-toolkit), not an official release or a new framework built from scratch. It adds ordered multi-reference workflows for H3 Image and FLUX.3, reference previews and editing, Chinese/English UI switching, parameter help, higher bucket options and local memory-handling changes. The production UI uses port **8676**.
 
-The tested setup is WSL2 Ubuntu with an NVIDIA RTX 5070 Ti 16GB. FLUX.3 completed six real updates with four references at a 512 bucket and produced a 512×1024 sample. H3 training and FLUX.3 at a 1024 bucket ran out of memory. Ten-reference training, 4K training and final LoRA quality are not validated. The installation steps above describe the existing working environment; a completely fresh-machine installation has not yet been verified. Original MIT copyright and license are retained.
+The tested setup is WSL2 Ubuntu with an NVIDIA RTX 5070 Ti 16GB. FLUX.3 completed six real updates with four references at a 512 bucket and produced a 512×1024 sample. H3 training and FLUX.3 at a 1024 bucket ran out of memory. Ten-reference training, 4K training and final LoRA quality are not validated. Separate step-by-step installation guides are provided for native Windows, Linux and WSL2 Ubuntu. The working environment is WSL2; fresh-machine installation across all three platforms has not yet been verified. Use npm run build_and_start for initial setup or rebuilding after updates, and npm run start for later normal launches. Original MIT copyright and license are retained.
